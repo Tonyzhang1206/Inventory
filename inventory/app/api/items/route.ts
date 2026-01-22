@@ -3,6 +3,16 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+export async function GET() {
+    try {
+        const items = await prisma.item.findMany(); // Fetch all items from the database
+        return new Response(JSON.stringify(items), { status: 200 });
+    } catch (error) {
+        console.error("Error fetching items:", error);
+        return new Response(JSON.stringify({ error: "Failed to fetch items" }), { status: 500 });
+    }
+}
+
 export async function POST(request:Request) {
     try{
         const body = await request.json();  //Reads the category from the incoming request
