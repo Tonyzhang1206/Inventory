@@ -11,6 +11,12 @@ interface Item {
 
 // Define and export the InventoryLists component
 export default function InventoryLists() {   
+
+    // State to hold the list of inventory items
+    const [items, setItems] = useState<Item[]>([]);
+    
+    const [loading, setLoading] = useState(true);
+
     return (
         <div>
             <h1>Inventory Lists Component</h1>
