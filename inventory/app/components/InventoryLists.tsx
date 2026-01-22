@@ -14,7 +14,7 @@ export default function InventoryLists() {
 
     // State to hold the list of inventory items
     const [items, setItems] = useState<Item[]>([]);
-    
+
     const [loading, setLoading] = useState(true);
 
     return (
@@ -22,5 +22,17 @@ export default function InventoryLists() {
             <h1>Inventory Lists Component</h1>
         </div>
     );
+}
+
+// Function to fetch inventory items from an API
+async function fetchInventoryItems() {
+    
+    const response = await fetch('/api/items'); // Replace with your API endpoint
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch data');
+    }
+    
+    return response.json();
 }
 
