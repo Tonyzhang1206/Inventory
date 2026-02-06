@@ -59,7 +59,7 @@ export default function InventoryLists() {
         }
     };
 
-    //Delet function
+    //Delete function
     const deleteItem = async (id: number) => {
         try {
             const response = await fetch('/api/items', {
@@ -73,13 +73,32 @@ export default function InventoryLists() {
         } catch (error) {
             console.error("Error deleting inventory item:", error);
         }
+    }
+
+    //Update Function
+    const updateQuantity = async (id: number, quantity: number, change: number) => {
+      const newQuantity = quantity + change;
+      if (newQuantity < 0) return; // Prevent negative quantities
+
+      try {
+          const response = await fetch('/api/items', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id, quantity: newQuantity }),
+          });
+
+          if (response.ok) {
+              fetchInventoryItems(); // Refresh the list after update
+          }
+      } catch (error) {
+          console.error("Error updating inventory item:", error);
+      }
     };
-  
     return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto p-4 md:p-6">
       <h1 className="text-3xl font-bold mb-8 text-gray-800">My Inventory</h1>
 
-      {/* --- ORDER FORM --- */}
+      {/* --- FORM SECTION --- */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
         <h2 className="text-xl font-semibold mb-4 text-gray-700">Add New Item</h2>
         <form onSubmit={addItem} className="flex gap-4 items-end flex-wrap">
@@ -122,14 +141,14 @@ export default function InventoryLists() {
         </form>
       </div>
 
-      {/* --- DISPLAY LIST --- */}
+      {/* --- LIST SECTION --- */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-gray-500">Loading your items...</div>
         ) : (
           <div className="w-full">
             
-            {/* DESKTOP VIEW (Table) - Hidden on small screens */}
+            {/* DESKTOP TABLE (Hidden on Mobile) */}
             <table className="min-w-full divide-y divide-gray-200 hidden md:table">
               <thead className="bg-gray-50">
                 <tr>
@@ -155,7 +174,12 @@ export default function InventoryLists() {
                           {item.category}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-900">{item.quantity}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-900 flex items-center gap-2">
+                        {/* Desktop Update Buttons */}
+                        <button onClick={() => updateQuantity(item.id, item.quantity, -1)} className="w-6 h-6 bg-gray-200 rounded hover:bg-gray-300 text-gray-700 font-bold flex items-center justify-center">-</button>
+                        <span>{item.quantity}</span>
+                        <button onClick={() => updateQuantity(item.id, item.quantity, 1)} className="w-6 h-6 bg-blue-100 rounded hover:bg-blue-200 text-blue-700 font-bold flex items-center justify-center">+</button>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
                           onClick={() => deleteItem(item.id)}
@@ -170,7 +194,7 @@ export default function InventoryLists() {
               </tbody>
             </table>
 
-            {/* MOBILE VIEW (Cards) - Visible ONLY on small screens */}
+            {/* MOBILE CARDS (Visible on Mobile) */}
             <div className="md:hidden flex flex-col divide-y divide-gray-200">
               {items.length === 0 ? (
                 <div className="p-6 text-center text-gray-500">
@@ -181,21 +205,38 @@ export default function InventoryLists() {
                   <div key={item.id} className="p-4 flex justify-between items-center">
                     <div>
                       <h3 className="text-lg font-medium text-gray-900">{item.name}</h3>
-                      <div className="flex gap-2 text-sm text-gray-500 mt-1">
-                        <span className="bg-gray-100 px-2 py-0.5 rounded-full text-xs">
+                      <div className="mt-1 mb-2">
+                        <span className="bg-gray-100 px-2 py-0.5 rounded-full text-xs text-gray-600">
                           {item.category}
                         </span>
-                        <span>Qty: <span className="font-bold text-gray-800">{item.quantity}</span></span>
+                      </div>
+                      
+                      {/* Mobile Quantity Controls */}
+                      <div className="flex items-center gap-3 mt-2">
+                        <span className="text-sm text-gray-500">Qty:</span>
+                        <button 
+                          onClick={() => updateQuantity(item.id, item.quantity, -1)}
+                          className="w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300 text-gray-700 font-bold"
+                        >
+                          -
+                        </button>
+                        <span className="font-bold text-gray-800 w-8 text-center">{item.quantity}</span>
+                        <button 
+                          onClick={() => updateQuantity(item.id, item.quantity, 1)}
+                          className="w-8 h-8 flex items-center justify-center bg-blue-100 rounded-full hover:bg-blue-200 text-blue-700 font-bold"
+                        >
+                          +
+                        </button>
                       </div>
                     </div>
                     
+                    {/* Mobile Delete Button */}
                     <button
                       onClick={() => deleteItem(item.id)}
-                      className="text-red-600 bg-red-50 p-2 rounded-lg hover:bg-red-100 transition-colors"
+                      className="text-red-600 bg-red-50 p-3 rounded-lg hover:bg-red-100 transition-colors"
                       aria-label="Delete item"
                     >
-                      {/* Trash Can Icon SVG */}
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     </button>
