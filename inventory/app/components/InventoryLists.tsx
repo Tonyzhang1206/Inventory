@@ -7,6 +7,7 @@ interface InventoryItem {
     name: string;
     quantity: number;
     category: string;
+    threshold?: number; // Optional threshold for low stock alerts
 }
 
 // Define and export the InventoryLists component
@@ -94,6 +95,7 @@ export default function InventoryLists() {
           console.error("Error updating inventory item:", error);
       }
     };
+    
     return (
     <div className="max-w-4xl mx-auto p-4 md:p-6">
       <h1 className="text-3xl font-bold mb-8 text-gray-800">My Inventory</h1>
@@ -201,47 +203,69 @@ export default function InventoryLists() {
                   No items found. Use the form above to add one!
                 </div>
               ) : (
-                items.map((item) => (
-                  <div key={item.id} className="p-4 flex justify-between items-center">
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900">{item.name}</h3>
-                      <div className="mt-1 mb-2">
-                        <span className="bg-gray-100 px-2 py-0.5 rounded-full text-xs text-gray-600">
-                          {item.category}
-                        </span>
+                items.map((item) => {
+                  // 1. LOGIC: Check if this specific item is running low
+                  // If we don't have a specific threshold set, use 5 as the default rule.
+                  const isLowStock = item.quantity < (item.threshold || 5);
+
+                  return (
+                    <div 
+                      key={item.id} 
+                      // 2. STYLE: If isLowStock is true, turn the background RED. If not, keep it WHITE.
+                      className={`p-4 flex justify-between items-center border-b ${
+                        isLowStock ? 'bg-red-50 border-red-200' : 'bg-white border-gray-100'
+                      }`}
+                    >
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
+                          {item.name}
+                          
+                          {/* 3. BADGE: Show a "LOW STOCK" warning tag if needed */}
+                          {isLowStock && (
+                            <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full font-bold border border-red-200">
+                              LOW STOCK
+                            </span>
+                          )}
+                        </h3>
+
+                        <div className="mt-1 mb-2">
+                          <span className="bg-gray-100 px-2 py-0.5 rounded-full text-xs text-gray-600">
+                            {item.category}
+                          </span>
+                        </div>
+                        
+                        {/* Mobile Quantity Controls */}
+                        <div className="flex items-center gap-3 mt-2">
+                          <span className="text-sm text-gray-500">Qty:</span>
+                          <button 
+                            onClick={() => updateQuantity(item.id, item.quantity, -1)}
+                            className="w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300 text-gray-700 font-bold"
+                          >
+                            -
+                          </button>
+                          <span className="font-bold text-gray-800 w-8 text-center">{item.quantity}</span>
+                          <button 
+                            onClick={() => updateQuantity(item.id, item.quantity, 1)}
+                            className="w-8 h-8 flex items-center justify-center bg-blue-100 rounded-full hover:bg-blue-200 text-blue-700 font-bold"
+                          >
+                            +
+                          </button>
+                        </div>
                       </div>
                       
-                      {/* Mobile Quantity Controls */}
-                      <div className="flex items-center gap-3 mt-2">
-                        <span className="text-sm text-gray-500">Qty:</span>
-                        <button 
-                          onClick={() => updateQuantity(item.id, item.quantity, -1)}
-                          className="w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300 text-gray-700 font-bold"
-                        >
-                          -
-                        </button>
-                        <span className="font-bold text-gray-800 w-8 text-center">{item.quantity}</span>
-                        <button 
-                          onClick={() => updateQuantity(item.id, item.quantity, 1)}
-                          className="w-8 h-8 flex items-center justify-center bg-blue-100 rounded-full hover:bg-blue-200 text-blue-700 font-bold"
-                        >
-                          +
-                        </button>
-                      </div>
+                      {/* Mobile Delete Button */}
+                      <button
+                        onClick={() => deleteItem(item.id)}
+                        className="text-red-600 bg-red-50 p-3 rounded-lg hover:bg-red-100 transition-colors"
+                        aria-label="Delete item"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
                     </div>
-                    
-                    {/* Mobile Delete Button */}
-                    <button
-                      onClick={() => deleteItem(item.id)}
-                      className="text-red-600 bg-red-50 p-3 rounded-lg hover:bg-red-100 transition-colors"
-                      aria-label="Delete item"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 
