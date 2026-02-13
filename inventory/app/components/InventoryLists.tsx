@@ -151,7 +151,17 @@ export default function InventoryLists() {
           <div className="w-full">
             
             {/* DESKTOP TABLE (Hidden on Mobile) */}
-            <tbody className="bg-white divide-y divide-gray-200">
+            {/* DESKTOP TABLE (Hidden on Mobile) */}
+            <table className="min-w-full divide-y divide-gray-200 hidden md:table">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
                 {items.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
@@ -160,13 +170,12 @@ export default function InventoryLists() {
                   </tr>
                 ) : (
                   items.map((item) => {
-                    // 1. LOGIC: Check for Low Stock (same as mobile)
+                    // LOGIC: Check for Low Stock
                     const isLowStock = item.quantity < (item.threshold || 5);
 
                     return (
                       <tr 
                         key={item.id} 
-                        // 2. STYLE: Turn row red if low stock
                         className={`transition-colors ${
                           isLowStock ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'
                         }`}
@@ -174,7 +183,7 @@ export default function InventoryLists() {
                         <td className="px-6 py-4 whitespace-nowrap text-gray-900 font-medium">
                           <div className="flex items-center gap-2">
                             {item.name}
-                            {/* 3. BADGE: Visual Warning */}
+                            {/* Low Stock Badge */}
                             {isLowStock && (
                               <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full font-bold border border-red-200">
                                 LOW STOCK
@@ -205,6 +214,7 @@ export default function InventoryLists() {
                   })
                 )}
               </tbody>
+            </table>
 
             {/* MOBILE CARDS (Visible on Mobile) */}
             <div className="md:hidden flex flex-col divide-y divide-gray-200">
