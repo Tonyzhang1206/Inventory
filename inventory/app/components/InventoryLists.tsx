@@ -151,16 +151,7 @@ export default function InventoryLists() {
           <div className="w-full">
             
             {/* DESKTOP TABLE (Hidden on Mobile) */}
-            <table className="min-w-full divide-y divide-gray-200 hidden md:table">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-gray-200">
                 {items.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
@@ -168,33 +159,52 @@ export default function InventoryLists() {
                     </td>
                   </tr>
                 ) : (
-                  items.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-900 font-medium">{item.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
-                          {item.category}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-900 flex items-center gap-2">
-                        {/* Desktop Update Buttons */}
-                        <button onClick={() => updateQuantity(item.id, item.quantity, -1)} className="w-6 h-6 bg-gray-200 rounded hover:bg-gray-300 text-gray-700 font-bold flex items-center justify-center">-</button>
-                        <span>{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.id, item.quantity, 1)} className="w-6 h-6 bg-blue-100 rounded hover:bg-blue-200 text-blue-700 font-bold flex items-center justify-center">+</button>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          onClick={() => deleteItem(item.id)}
-                          className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1 rounded-md transition-colors"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))
+                  items.map((item) => {
+                    // 1. LOGIC: Check for Low Stock (same as mobile)
+                    const isLowStock = item.quantity < (item.threshold || 5);
+
+                    return (
+                      <tr 
+                        key={item.id} 
+                        // 2. STYLE: Turn row red if low stock
+                        className={`transition-colors ${
+                          isLowStock ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'
+                        }`}
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap text-gray-900 font-medium">
+                          <div className="flex items-center gap-2">
+                            {item.name}
+                            {/* 3. BADGE: Visual Warning */}
+                            {isLowStock && (
+                              <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full font-bold border border-red-200">
+                                LOW STOCK
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
+                            {item.category}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-gray-900 flex items-center gap-2">
+                          <button onClick={() => updateQuantity(item.id, item.quantity, -1)} className="w-6 h-6 bg-gray-200 rounded hover:bg-gray-300 text-gray-700 font-bold flex items-center justify-center">-</button>
+                          <span className="font-bold w-6 text-center">{item.quantity}</span>
+                          <button onClick={() => updateQuantity(item.id, item.quantity, 1)} className="w-6 h-6 bg-blue-100 rounded hover:bg-blue-200 text-blue-700 font-bold flex items-center justify-center">+</button>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <button
+                            onClick={() => deleteItem(item.id)}
+                            className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1 rounded-md transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
-            </table>
 
             {/* MOBILE CARDS (Visible on Mobile) */}
             <div className="md:hidden flex flex-col divide-y divide-gray-200">
