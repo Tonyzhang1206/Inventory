@@ -51,18 +51,26 @@ export async function DELETE(request: Request) {
         return NextResponse.json({ error: "Failed to delete item" }, { status: 500 });
     }
     
-}
+}    
 
 // Update an existing item in the inventory
 export async function PUT(request: Request) {
     try {
         const body = await request.json();
-        const { id, quantity} = body;
+        const { id, name, category, quantity , threshold} = body;
+
+        const updateData: any = {}; // create an object to only the things that are being updated
+
+        // Only add fields to updateData if they are provided in the request
+        if (name !== undefined) updateData.name = name;
+        if (category !== undefined) updateData.category = category;
+        if (quantity !== undefined) updateData.quantity = Number(quantity);
+        if (threshold !== undefined) updateData.threshold = Number(threshold);
 
         //update the item in the database
         const updatedItem = await prisma.item.update({
             where: { id: Number(id) },
-            data: { quantity: Number(quantity) }
+            data: updateData
         });
         return new Response(JSON.stringify(updatedItem), { status: 200 });
     } catch (error) {

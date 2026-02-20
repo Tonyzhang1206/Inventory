@@ -16,8 +16,8 @@ export default function InventoryLists() {
     // State to hold the list of inventory items
     const [items, setItems] = useState<InventoryItem[]>([]);
     const [newItem, setNewItem] = useState({name: '', category: '', quantity: ''});
-
     const [loading, setLoading] = useState(true);
+    const [editingItem, setEditingItem] = useState<InventoryItem | null>(null); // Track which item is being edited
 
     // useEffect to fetch data when the component mounts
     useEffect(() => {
@@ -95,6 +95,26 @@ export default function InventoryLists() {
           console.error("Error updating inventory item:", error);
       }
     };
+
+    // Save edits function (for future use when implementing inline editing)
+    const saveEdit = async () => {
+      if (!editingItem) return;
+      try {
+          const response = await fetch('/api/items', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(editingItem),
+          });
+          if (response.ok) {
+              setEditingItem(null); // Exit edit mode
+              fetchInventoryItems(); // Refresh the list after update
+          } else {
+              console.error("Failed to save changes");
+          }
+      } catch (error) {
+          console.error("Error saving inventory item:", error);
+      }
+    };
     
     return (
     <div className="max-w-4xl mx-auto p-4 md:p-6">
@@ -170,7 +190,7 @@ export default function InventoryLists() {
                 ) : (
                   items.map((item) => {
                     // LOGIC: Check for Low Stock
-                    const isLowStock = item.quantity < 3;
+                    const isLowStock = item.quantity <= (item.threshold || 5);
 
                     return (
                       <tr 
@@ -201,6 +221,16 @@ export default function InventoryLists() {
                           <button onClick={() => updateQuantity(item.id, item.quantity, 1)} className="w-6 h-6 bg-blue-100 rounded hover:bg-blue-200 text-blue-700 font-bold flex items-center justify-center">+</button>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+
+                          {/*EDIT BUTTON */}
+                            <button
+                              onClick={() => setEditingItem(item)}
+                              className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-md transition-colors mr-2"
+                            >
+                              Edit
+                            </button>
+
+                          { /* DELETE BUTTON */}
                           <button
                             onClick={() => deleteItem(item.id)}
                             className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1 rounded-md transition-colors"
@@ -225,7 +255,7 @@ export default function InventoryLists() {
                 items.map((item) => {
                   // 1. LOGIC: Check if this specific item is running low
                   // If we don't have a specific threshold set, use 5 as the default rule.
-                  const isLowStock = item.quantity < 3;
+                  const isLowStock = item.quantity <= (item.threshold || 5);
 
                   return (
                     <div 
@@ -272,16 +302,30 @@ export default function InventoryLists() {
                         </div>
                       </div>
                       
-                      {/* Mobile Delete Button */}
-                      <button
-                        onClick={() => deleteItem(item.id)}
-                        className="text-red-600 bg-red-50 p-3 rounded-lg hover:bg-red-100 transition-colors"
-                        aria-label="Delete item"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
+                      {/* Mobile Action Buttons (Edit + Delete) */}
+                      <div className="flex flex-col gap-2 ml-4">
+                        <button
+                          onClick={() => setEditingItem(item)}
+                          className="text-blue-600 bg-blue-50 p-3 rounded-lg hover:bg-blue-100 transition-colors flex items-center justify-center"
+                          aria-label="Edit item"
+                        >
+                          {/* Pencil Icon */}
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                          </svg>
+                        </button>
+
+                        <button
+                          onClick={() => deleteItem(item.id)}
+                          className="text-red-600 bg-red-50 p-3 rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center"
+                          aria-label="Delete item"
+                        >
+                          {/* Trash Icon */}
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   );
                 })
@@ -291,6 +335,70 @@ export default function InventoryLists() {
           </div>
         )}
       </div>
+      {/* ========================================== */}
+      {/* EDIT MODAL (Appears only when editingItem is not null) */}
+      {/* ========================================== */}
+      {editingItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          {/* Modal Container: Auto-sizes for mobile and desktop */}
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 transform transition-all">
+            <h2 className="text-2xl font-bold mb-5 text-gray-800 border-b pb-2">Edit Item</h2>
+            
+            <div className="space-y-4">
+              {/* Name Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <input
+                  type="text"
+                  className="w-full p-3 border border-gray-300 rounded-lg text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={editingItem.name}
+                  onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                />
+              </div>
+
+              {/* Category Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <input
+                  type="text"
+                  className="w-full p-3 border border-gray-300 rounded-lg text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={editingItem.category}
+                  onChange={(e) => setEditingItem({ ...editingItem, category: e.target.value })}
+                />
+              </div>
+
+              {/* Threshold Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Low Stock Alert Threshold
+                </label>
+                <input
+                  type="number"
+                  className="w-full p-3 border border-gray-300 rounded-lg text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={editingItem.threshold || 0}
+                  onChange={(e) => setEditingItem({ ...editingItem, threshold: Number(e.target.value) })}
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 mt-8">
+                <button
+                  onClick={() => setEditingItem(null)} // Cancel closes the modal
+                  className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-bold transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveEdit} // Save calls your new function
+                  className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold transition-colors"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
