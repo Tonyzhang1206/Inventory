@@ -151,7 +151,6 @@ export default function InventoryLists() {
           <div className="w-full">
             
             {/* DESKTOP TABLE (Hidden on Mobile) */}
-            {/* DESKTOP TABLE (Hidden on Mobile) */}
             <table className="min-w-full divide-y divide-gray-200 hidden md:table">
               <thead className="bg-gray-50">
                 <tr>
@@ -171,7 +170,7 @@ export default function InventoryLists() {
                 ) : (
                   items.map((item) => {
                     // LOGIC: Check for Low Stock
-                    const isLowStock = item.quantity < (item.threshold || 5);
+                    const isLowStock = item.quantity < 3;
 
                     return (
                       <tr 
@@ -226,7 +225,7 @@ export default function InventoryLists() {
                 items.map((item) => {
                   // 1. LOGIC: Check if this specific item is running low
                   // If we don't have a specific threshold set, use 5 as the default rule.
-                  const isLowStock = item.quantity < (item.threshold || 5);
+                  const isLowStock = item.quantity < 3;
 
                   return (
                     <div 
