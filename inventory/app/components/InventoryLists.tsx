@@ -20,6 +20,7 @@ export default function InventoryLists() {
     const [editingItem, setEditingItem] = useState<InventoryItem | null>(null); // Track which item is being edited
     const [deletingItem, setDeletingItem] = useState<InventoryItem | null>(null); // Track which item is being deleted
     const [showLowStockOnly, setShowLowStockOnly] = useState(false); // State to toggle low stock filter
+    const [searchQuery, setSearchQuery] = useState(''); // State for search input  
 
     // useEffect to fetch data when the component mounts
     useEffect(() => {
@@ -118,25 +119,53 @@ export default function InventoryLists() {
       }
     };
 
-    const displayItems = showLowStockOnly
-      ? items.filter(item => item.quantity <= (item.threshold ?? 0))
-      : items;
+    const displayItems = items.filter(item => {
+      // checks if the item name matches the search
+      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || item.category.toLowerCase().includes(searchQuery.toLowerCase());
+      // checks if the item is low stock (if the filter is on)
+      const matchesLowStock = showLowStockOnly
+        ? item.quantity <= (item.threshold ?? 0) // Use the item's specific threshold if available, otherwise default to 5
+        : true; // If the low stock filter is off, we consider all items as matching this condition
+
+        //keep the item only if it passes both filters (search and low stock)
+      return matchesSearch && matchesLowStock;
+    });
     
     return (
     <div className="max-w-4xl mx-auto p-4 md:p-6">
       <h1 className="text-3xl font-bold mb-8 text-gray-800">My Inventory</h1>
 
-      {/* LOW STOCK FILTER BUTTON */}
-      <div className="mb-4 flex justify-end">
+{/* ========================================== */}
+      {/* CONTROL PANEL: SEARCH & FILTERS */}
+      {/* ========================================== */}
+      <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        
+        {/* Search Bar */}
+        <div className="relative w-full sm:w-96">
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            {/* Magnifying Glass Icon */}
+            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input
+            type="text"
+            placeholder="Search inventory..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-white text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+          />
+        </div>
+
+        {/* Low Stock Filter Button */}
         <button
           onClick={() => setShowLowStockOnly(!showLowStockOnly)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold transition-all w-full sm:w-auto justify-center ${
             showLowStockOnly 
               ? "bg-red-100 text-red-800 border-2 border-red-300 shadow-inner" 
               : "bg-white text-gray-600 border-2 border-gray-200 hover:bg-gray-50 hover:border-gray-300 shadow-sm"
           }`}
         >
-          {/* A little warning icon */}
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
