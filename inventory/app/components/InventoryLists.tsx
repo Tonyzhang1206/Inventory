@@ -18,6 +18,8 @@ export default function InventoryLists() {
     const [newItem, setNewItem] = useState({name: '', category: '', quantity: ''});
     const [loading, setLoading] = useState(true);
     const [editingItem, setEditingItem] = useState<InventoryItem | null>(null); // Track which item is being edited
+    const [deletingItem, setDeletingItem] = useState<InventoryItem | null>(null); // Track which item is being deleted
+    const [showLowStockOnly, setShowLowStockOnly] = useState(false); // State to toggle low stock filter
 
     // useEffect to fetch data when the component mounts
     useEffect(() => {
@@ -115,10 +117,32 @@ export default function InventoryLists() {
           console.error("Error saving inventory item:", error);
       }
     };
+
+    const displayItems = showLowStockOnly
+      ? items.filter(item => item.quantity <= (item.threshold ?? 0))
+      : items;
     
     return (
     <div className="max-w-4xl mx-auto p-4 md:p-6">
       <h1 className="text-3xl font-bold mb-8 text-gray-800">My Inventory</h1>
+
+      {/* LOW STOCK FILTER BUTTON */}
+      <div className="mb-4 flex justify-end">
+        <button
+          onClick={() => setShowLowStockOnly(!showLowStockOnly)}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold transition-all ${
+            showLowStockOnly 
+              ? "bg-red-100 text-red-800 border-2 border-red-300 shadow-inner" 
+              : "bg-white text-gray-600 border-2 border-gray-200 hover:bg-gray-50 hover:border-gray-300 shadow-sm"
+          }`}
+        >
+          {/* A little warning icon */}
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          {showLowStockOnly ? "Showing Low Stock" : "Filter Low Stock"}
+        </button>
+      </div>
 
       {/* --- FORM SECTION --- */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
@@ -188,7 +212,7 @@ export default function InventoryLists() {
                     </td>
                   </tr>
                 ) : (
-                  items.map((item) => {
+                  displayItems.map((item) => {
                     // LOGIC: Check for Low Stock
                     const isLowStock = item.quantity <= (item.threshold || 5);
 
@@ -232,7 +256,7 @@ export default function InventoryLists() {
 
                           { /* DELETE BUTTON */}
                           <button
-                            onClick={() => deleteItem(item.id)}
+                            onClick={() => setDeletingItem(item)}
                             className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1 rounded-md transition-colors"
                           >
                             Delete
@@ -252,7 +276,7 @@ export default function InventoryLists() {
                   No items found. Use the form above to add one!
                 </div>
               ) : (
-                items.map((item) => {
+                displayItems.map((item) => {
                   // 1. LOGIC: Check if this specific item is running low
                   // If we don't have a specific threshold set, use 5 as the default rule.
                   const isLowStock = item.quantity <= (item.threshold || 5);
@@ -316,7 +340,7 @@ export default function InventoryLists() {
                         </button>
 
                         <button
-                          onClick={() => deleteItem(item.id)}
+                          onClick={() => setDeletingItem(item)}
                           className="text-red-600 bg-red-50 p-3 rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center"
                           aria-label="Delete item"
                         >
@@ -395,6 +419,43 @@ export default function InventoryLists() {
                   Save Changes
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================== */}
+      {/* DELETE CONFIRMATION MODAL */}
+      {/* ========================================== */}
+      {deletingItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 transform transition-all text-center">
+            {/* Warning Icon */}
+            <svg className="mx-auto mb-4 text-red-500 w-12 h-12" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+              <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+            </svg>
+            
+            <h3 className="mb-2 text-xl font-bold text-gray-900">Are you sure?</h3>
+            <p className="mb-6 text-gray-500 font-medium">
+              Do you really want to delete <span className="font-bold text-gray-900">"{deletingItem.name}"</span>? This process cannot be undone.
+            </p>
+            
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => setDeletingItem(null)} // Cancel closes the modal
+                className="py-2.5 px-5 text-sm font-bold text-gray-900 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 transition-colors"
+              >
+                No, cancel
+              </button>
+              <button
+                onClick={() => {
+                  deleteItem(deletingItem.id); // Run the actual delete function
+                  setDeletingItem(null); // Close the modal
+                }}
+                className="py-2.5 px-5 text-sm font-bold text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:ring-red-300 transition-colors"
+              >
+                Yes, delete it
+              </button>
             </div>
           </div>
         </div>
