@@ -133,7 +133,9 @@ export default function InventoryLists() {
     
     return (
     <div className="max-w-4xl mx-auto p-4 md:p-6">
-      <h1 className="text-3xl font-bold mb-8 text-gray-800">My Inventory</h1>
+      <h1 className="text-3xl font-extrabold text-white tracking-tight drop-shadow-md">
+  Inventory
+</h1>
 
 {/* ========================================== */}
       {/* CONTROL PANEL: SEARCH & FILTERS */}
