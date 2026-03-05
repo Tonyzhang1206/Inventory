@@ -19,4 +19,5 @@ model Item {
   quantity  Int
   category String
   threshold Int      @default(3)
+  isReordered Boolean  @default(false)
 }
