@@ -18,5 +18,5 @@ model Item {
   name      String
   quantity  Int
   category String
-  threshold Int      @default(5)
+  threshold Int      @default(3)
 }
