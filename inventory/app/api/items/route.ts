@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import next from 'next';
+import { Resend} from 'resend';
 
 const prisma = new PrismaClient();
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Fetch all items from the inventory
 export async function GET() {
@@ -72,6 +74,37 @@ export async function PUT(request: Request) {
             where: { id: Number(id) },
             data: updateData
         });
+
+        // ==========================================
+        // 🚨 THE LOW STOCK ALARM SYSTEM
+        // ==========================================
+        if (updatedItem.quantity <= updatedItem.threshold) {
+            if (updatedItem.isReordered === false) {
+                try {
+                    await resend.emails.send({
+                        from: 'onboarding@resend.dev', 
+                        to: 'tonyzhang122001@gmail.com', // 👉 CHANGE THIS TO YOUR ACTUAL EMAIL
+                        subject: `🚨 Low Stock Alert: ${updatedItem.name}`,
+                        html: `
+                            <div style="font-family: sans-serif; padding: 20px;">
+                                <h2 style="color: #d97706;">Low Stock Warning</h2>
+                                <p>Your inventory for <strong>${updatedItem.name}</strong> has dropped to <strong>${updatedItem.quantity}</strong>.</p>
+                                <p>It's time to reorder!</p>
+                                <br/>
+                                <a href="http://localhost:3000/api/reorder?id=${updatedItem.id}" style="background-color: #2563eb; color: white; padding: 10px 18px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                                    I Ordered It (Mute Alarm)
+                                </a>
+                            </div>
+                        `
+                    });
+                    console.log("Email alarm triggered successfully!");
+                } catch (emailError) {
+                    console.error("Failed to send email:", emailError);
+                }
+            }
+        }
+        // ==========================================
+
         return new Response(JSON.stringify(updatedItem), { status: 200 });
     } catch (error) {
         console.error("Error updating item:", error);
