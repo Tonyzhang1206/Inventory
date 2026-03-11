@@ -75,15 +75,19 @@ export async function PUT(request: Request) {
             data: updateData
         });
 
+        console.log("---Alarm check");
+        console.log(`Item: ${updatedItem.name} | Qty: ${updatedItem.quantity} | Threshold: ${updatedItem.threshold}`);
+        console.log(`Is Reordered?: ${updatedItem.isReordered}`);
+
         // ==========================================
         // 🚨 THE LOW STOCK ALARM SYSTEM
         // ==========================================
         if (updatedItem.quantity <= updatedItem.threshold) {
             if (updatedItem.isReordered === false) {
-                try {
-                    await resend.emails.send({
+try {
+                    const { data, error } = await resend.emails.send({
                         from: 'onboarding@resend.dev', 
-                        to: 'tonyzhang122001@gmail.com', // 👉 CHANGE THIS TO YOUR ACTUAL EMAIL
+                        to: 'tonyzhang122001@gmail.com', // 👉 KEEP YOUR ACTUAL EMAIL HERE
                         subject: `🚨 Low Stock Alert: ${updatedItem.name}`,
                         html: `
                             <div style="font-family: sans-serif; padding: 20px;">
@@ -97,9 +101,16 @@ export async function PUT(request: Request) {
                             </div>
                         `
                     });
-                    console.log("Email alarm triggered successfully!");
+
+                    // 👉 If Resend returns an error, print it loud and clear!
+                    if (error) {
+                        console.error("❌ RESEND REJECTED THE EMAIL:", error);
+                    } else {
+                        console.log("✅ EMAIL ACTUALLY SENT! ID:", data);
+                    }
+
                 } catch (emailError) {
-                    console.error("Failed to send email:", emailError);
+                    console.error("❌ FATAL EMAIL CRASH:", emailError);
                 }
             }
         }
