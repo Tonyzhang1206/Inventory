@@ -69,6 +69,10 @@ export async function PUT(request: Request) {
         if (quantity !== undefined) updateData.quantity = Number(quantity);
         if (threshold !== undefined) updateData.threshold = Number(threshold);
 
+        if (updateData.quantity > updateData.threshold) {
+            updateData.isReordered = false; // reset the reorder status if quantity is above threshold
+        }
+
         //update the item in the database
         const updatedItem = await prisma.item.update({
             where: { id: Number(id) },
@@ -95,7 +99,7 @@ try {
                                 <p>Your inventory for <strong>${updatedItem.name}</strong> has dropped to <strong>${updatedItem.quantity}</strong>.</p>
                                 <p>It's time to reorder!</p>
                                 <br/>
-                                <a href="http://localhost:3000/api/reorder?id=${updatedItem.id}" style="background-color: #2563eb; color: white; padding: 10px 18px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                                <a href="${process.env.NEXT_PUBLIC_APP_URL}/api/reorder?id=${updatedItem.id}" style="background-color: #2563eb; color: white; padding: 10px 18px; text-decoration: none; border-radius: 5px; font-weight: bold;">
                                     I Ordered It (Mute Alarm)
                                 </a>
                             </div>
